@@ -1,14 +1,22 @@
 ##🔐 Projeto — Ransomware & Keylogger (foco em defesa)
 
+--
+
 ##📌 Descrição
 
+--
+
 Este repositório documenta simulações seguras e educativas de comportamentos associados a ransomware e keyloggers, com foco em análise e defesa. Nenhum script aqui altera ficheiros fora do escopo do laboratório ou executa captura furtiva de teclas. Execute apenas em VMs isoladas e com autorização.
+
+--
 
 ##🛠️ Ambiente Utilizado
 
 Visual Studio Code - (Para criação de scripts)
 
 E-mail do Google - (Para recebimento de e-mails contendo log com saída do keylogger)
+
+--
 
 ##✅ Cenários / Scripts (simulações seguras)
 
@@ -23,10 +31,13 @@ Descriptografia dos arquivos
 
 descriptografar.py
 
+--
 
 ##🔍 Resultados
 
 Prints das execuções, logs e dashboards estão na pasta images/.
+
+--
 
 ##🛡️ Recomendações de Mitigação
 
@@ -39,6 +50,8 @@ Configurar bloqueio/alerta para criação massiva de ficheiros.
 Aplicar princípio do menor privilégio e MFA.
 
 Treinar usuários para reduzir risco de phishing.
+
+--
 
 ##⚠️ Aviso Legal / Uso
 
