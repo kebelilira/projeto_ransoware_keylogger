@@ -1,210 +1,119 @@
-# Projeto: Simulação Educacional de Malware (Ransomware + Keylogger)
+# Projeto Educacional — Simulações seguras: Ransomware & Keylogger (foco em defesa)
 
-> **Aviso legal e ético**
->
-> Este repositório é estritamente educacional. **Nunca** execute scripts que manipulem ou capturem dados em máquinas de produção, sistemas de terceiros, ou sem consentimento explícito. Use **ambientes isolados** (VMs/containers com snapshot) e arquivos **de teste/dummy**. O autor não se responsabiliza por uso indevido.
+> **Aviso importante:** Este repositório tem fins **exclusivamente educacionais e defensivos**. Nenhum script aqui contido deve ser executado fora de um ambiente de laboratório isolado e com autorização. Siga as instruções de segurança abaixo antes de qualquer execução.
 
----
+## Visão geral
+Este projeto documenta a análise e a simulação **segura** de comportamentos associados a ransomware e keyloggers, com foco em:
+- Entendimento conceitual das técnicas utilizadas por essas ameaças;
+- Construção de contramedidas e regras de detecção (Sysmon, Sigma, YARA);
+- Experimentos controlados que **não** realizam ações maliciosas em sistemas alheios;
+- Playbook de resposta a incidentes e recomendações de defesa.
 
-## Índice
-
-1. Visão Geral
-2. Objetivos do Projeto
-3. Conteúdo do Repositório
-4. Ambiente Seguro e Pré-requisitos
-5. Estrutura e Descrição dos Scripts (simulados)
-6. Como Executar (modo seguro)
-7. Cenários de Teste (sugestões)
-8. Análise, Detecção e Mitigação
-9. Resultados e Documentação
-10. Boas práticas de GitHub e Entrega
-11. Referências e Recursos úteis
-12. Licença
+> Observação: os scripts de `simulations/` são **inofensivos** (ex.: geração de ficheiros de teste e geração de nota de resgate fictícia). Eles **não cifram ficheiros nem capturam teclas de forma furtiva**.
 
 ---
 
-## 1. Visão Geral
-
-Este repositório reúne um projeto didático que simula — em ambiente controlado — o comportamento básico de **ransomware** e **keylogger**, com foco em aprendizado sobre:
-
-* Como essas ameaças atuam (conceitualmente);
-* Quais artefatos geram (arquivos, logs, mensagens);
-* Como detectar, mitigar e se proteger;
-* Como documentar experimentos para portfólio (GitHub).
-
-O objetivo **NÃO** é fornecer ferramentas operacionais, e sim criar uma base teórica + experimentos com scripts **não-destrutivos** e com modos `--dry-run` ou `--confirm` para análise.
-
----
-
-## 2. Objetivos do Projeto
-
-* Entender mecanismos básicos de criptografia aplicada a arquivos (apenas para estudo).
-* Simular captura de eventos de teclado em arquivos de teste (APENAS em ambiente controlado).
-* Implementar mecanismos de controle para criptografar/descriptografar **somente** arquivos de teste.
-* Documentar processos de detecção (logs, assinaturas, comportamento), respostas e medidas de defesa.
-* Publicar um repositório com README detalhado, exemplos e reflexões sobre segurança.
+## Estrutura do repositório
+- `README.md` — este arquivo.
+- `lab-setup/` — instruções para configurar VMs, snapshots e ambiente seguro.
+- `simulations/`
+  - `generate_test_files.py` — gera ficheiros de teste em `test_files/` para simular criação massiva de ficheiros.
+  - `generate_ransom_note.py` — gera um ficheiro `NOTA_RESGATE.txt` com mensagem educativa.
+  - *(outros scripts seguros e documentados)*
+- `detection/`
+  - `sysmon-config.xml` — exemplo de configuração Sysmon.
+  - `sigma/` — regras Sigma (mass file creation, ransom note creation, suspicious child spawn).
+  - `yara/` — regras YARA educativas.
+- `playbooks/`
+  - `incident_response.md` — playbook de resposta a incidentes.
+- `docs/` — relatório técnico, pseudocódigo e reflexões.
+- `slides/` — esboço de apresentação.
+- `images/` — prints/screenshots das execuções e dashboards (ex.: alertas no SIEM, execução do script inofensivo, gráficos). **Veja abaixo como estão organizadas as imagens.**
 
 ---
 
-## 4. Ambiente Seguro e Pré-requisitos
+## O que acontece — resumo das simulações (em linguagem simples)
+- **Geração de ficheiros de teste** (`generate_test_files.py`):
+  - Cria uma pasta local chamada `test_files/` e popula com N ficheiros texto.
+  - Finalidade: simular um padrão de *criação massiva de ficheiros* para testar detecções comportamentais (ex.: regras Sigma).
+  - Segurança: todos os ficheiros são gerados apenas na pasta `test_files/` criada pelo script.
 
-Recomenda-se executar tudo em uma **máquina virtual** ou container isolado (VirtualBox, VMware, QEMU, Docker) com snapshot:
+- **Geração de nota de resgate** (`generate_ransom_note.py`):
+  - Cria um ficheiro de texto `NOTA_RESGATE.txt` com uma mensagem fictícia.
+  - Finalidade: permitir testar detecções por conteúdo (YARA / Sigma) sem causar dano.
+  - Segurança: não altera, apaga ou cifra quaisquer outros ficheiros.
 
-* Python 3.8+
-* `virtualenv` (recomendado)
-* Bibliotecas opcionais: `cryptography` (Fernet), `pynput` (apenas para testes locais), `smtplib` (biblioteca padrão do Python para envio de e-mail)
+- **Regras de detecção e configuração** (`detection/`):
+  - Contém exemplos de configuração Sysmon, Sigma rules e YARA rules para identificar padrões como criação massiva de ficheiros, nomes/strings típicas de notas de resgate e spawn suspeito de processsos.
+  - Teste essas regras em um SIEM/ELK em ambiente isolado.
 
-Exemplo de instalação (na VM):
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-**Notas de segurança**:
-
-* Use contas de e-mail de teste descartáveis para qualquer envio.
+- **Playbook IR** (`playbooks/incident_response.md`):
+  - Procedimentos recomendados: identificação, contenção, coleta de evidências, erradicação, recuperação e lições aprendidas.
 
 ---
 
-## 5. Estrutura e Descrição dos Scripts (simulados)
+## Como executar (apenas em laboratório isolado)
+1. Crie uma VM isolada (VirtualBox/VMware) sem acesso irrestrito à rede — preferencialmente host-only ou offline.  
+2. Faça snapshot antes de qualquer teste.  
+3. Copie os scripts `simulations/` para a VM e verifique os conteúdos antes de executar.  
+4. No terminal da VM, execute (exemplo):
+   ```bash
+   python3 simulations/generate_test_files.py
+   python3 simulations/generate_ransom_note.py
+Observe os logs/alertas no seu SIEM ou ferramentas (Sysmon/ELK/Velociraptor).
 
-> **Importante:** Os scripts devem ser escritos com segurança: `--dry-run` padrão, confirmação explícita (`--confirm`) para operações destrutivas, e limitação a pastas de teste.
+Ao terminar, restaure o snapshot ou remova a VM conforme política do laboratório.
 
-### `ransomware_sim.py` (simulado)
+NÃO execute esses scripts em máquinas de produção, em computadores de terceiros, ou em redes sem autorização escrita.
 
-* Objetivo: demonstrar o fluxo de criptografia/descriptografia aplicado apenas a arquivos em `tests/files`.
-* Modos e flags sugeridos:
+Pasta images/ — prints e evidências visuais
+A pasta images/ contém capturas de tela demonstrando:
 
-  * `--list-targets` — lista arquivos alvo (sem alterações).
-  * `--encrypt --target <dir>` — encripta arquivos dummy (gera `.enc`).
-  * `--decrypt --key <keyfile>` — descriptografa arquivos previamente encriptados.
-  * `--dry-run` — exibe ações sem alterar arquivos.
-  * `--confirm` — permite escrita (obrigatório para operações que alteram arquivos).
-* Implementação segura:
+Execução do generate_test_files.py mostrando a criação dos ficheiros.
 
-  * Gerar chave localmente e armazenar em `tests/keys/` (apenas para demonstração).
-  * Produzir arquivo `README_RESCUE.txt` com mensagem de demonstração (sem instruções criminosas reais).
+Conteúdo do NOTA_RESGATE.txt gerado pelo generate_ransom_note.py.
 
-### `keylogger_sim.py` (simulado)
+Dashboards / alertas no ELK / SIEM após execução (ex.: alerta de Mass File Creation).
 
-* Objetivo: demonstrar a captura de eventos de teclado em ambiente controlado e registrar em `tests/keylogs/`.
-* Modos e flags sugeridos:
+Exemplos de saída de ferramentas de análise (Process Monitor, Sysmon eventos).
 
-  * `--record --duration <seconds>` — grava por N segundos em `tests/keylogs/log.txt`.
-  * `--report` — gera estatísticas (número de eventos, tipo de input).
-  * `--send --smtp-config <file>` — envia log para e-mail de teste (apenas em laboratório).
-* Implementação segura:
+Estrutura recomendada dentro de images/:
 
-  * Arquivo de saída com permissões restritas.
-  * Redigir/anonimizar dados sensíveis antes de qualquer compartilhamento.
+markdown
+Copiar código
+images/
+  - test_files_creation_01.png
+  - ransom_note_created_01.png
+  - siem_alert_mass_file_creation.png
+  - sysmon_events_example.png
+  - playbook_example_flow.png
+Cada imagem tem legenda no relatório docs/report.md explicando o que é e que etapa ela ilustra.
 
----
+Recomendações de segurança e ética
+Sempre obtenha autorização por escrito antes de testar em ambientes que não são de sua propriedade.
 
-## 6. Como Executar (exemplos seguros)
+Nunca execute testes em ambientes de produção.
 
-1. Clone o repositório na VM isolada.
-2. Ative o ambiente virtual e instale dependências.
-3. Crie arquivos dummy para teste:
+Mantenha backups e snapshots atualizados.
 
-```bash
-mkdir -p tests/files
-echo "arquivo de teste 1" > tests/files/test1.txt
-echo "senha: 1234" > tests/files/secret_dummy.txt
-```
+Destrua amostras sensíveis e snapshots depois dos testes, ou armazene-os de forma segura e documentada.
 
-4. Executar ransomware em modo `--dry-run`:
+Mantenha registros (logs, evidências) de todas as ações realizadas no laboratório.
 
-```bash
-python3 scripts/ransomware_sim.py --target tests/files --dry-run
-```
+Como contribuir / adaptar
+Se quiser adaptar este repositório:
 
-5. Após revisar o que será afetado, rodar com confirmação:
+Sugestões de detecção e thresholds são bem-vindas (abrir issue).
 
-```bash
-python3 scripts/ransomware_sim.py --target tests/files --encrypt --confirm
-```
+Envie PRs com melhorias nas regras Sigma/YARA e com comentários sobre falsos positivos.
 
-6. Teste do keylogger (10 segundos):
+Se acrescentar scripts, documente claramente o propósito e as garantias de segurança.
 
-```bash
-python3 scripts/keylogger_sim.py --record --duration 10
-```
+Licença
+Escolha e coloque aqui a licença do projeto (ex.: MIT, CC-BY-NC, etc.). Exemplo:
 
-7. Envio por e-mail (apenas com conta de teste e config apropriada):
-
-```bash
-python3 scripts/keylogger_sim.py --send --smtp-config tests/smtp_config_template.json
-```
-
-> Sempre verifique se os arquivos afetados estão dentro de `tests/` e que existe snapshot da VM.
-
----
-
-## 7. Cenários de Teste (sugestões)
-
-* Arquivos: txt, pequenos .docx dummy, imagens.
-* Métricas: tempo de execução, uso de CPU/RAM.
-* Artefatos: arquivos `.enc`, arquivos de log, `README_RESCUE.txt` (simulado).
-* Ferramentas: executar antivírus na VM, coletar logs do sistema, usar `strace`/`procmon` para observar comportamento.
-
----
-
-## 8. Análise, Detecção e Mitigação
-
-Documente em `docs/` itens como:
-
-* **IoCs (Indicadores de Comprometimento):** padrões de nome de arquivo, extensões geradas, horários de criação, hashes.
-* **Como detectar:** monitoramento de criação/alteração maciça de arquivos, processos anômalos, tráfego SMTP não autorizado.
-* **Mitigação:** isolar máquina, restaurar backups, varredura com EDR/AV, aplicar patches, rotinas de least-privilege.
-* **Resposta:** playbook de incidente (coletar evidências, isolar, analisar, restaurar, comunicar).
-* **Prevenção:** backups offline, segmentação de rede, MFA, conscientização do usuário, atualização contínua.
-
----
-
-## 9. Resultados e Documentação
-
-Inclua em `docs/analysis.md` e nas imagens:
-
-* Screenshots (da VM) mostrando execução e artefatos (sanitizados).
-* Logs de execução (sanitizados).
-* Checklist de sucesso: por exemplo, arquivos `.enc` criados e descriptografados com sucesso quando a chave correta é usada.
-* Reflexão crítica: limitações do modelo simulado, riscos, e como o experimento ilustra vetores reais.
-
----
-
-## 10. Boas práticas de GitHub e Entrega
-
-* `README.md` com aviso ético no topo.
-* `.gitignore` para não subir chaves ou credenciais.
-* Scripts com `--dry-run` padrão e confirmação para operações destrutivas.
-* Commits pequenos e descritivos (ex.: `feat: adicionar modo dry-run ao ransomware_sim`).
-* Adicionar `LICENSE` (ex.: MIT) e observar políticas da sua instituição/curso sobre publicação de conteúdo sensível.
-
-**Texto sugerido para entrega (colar no formulário):**
-
-> Este repositório contém a implementação e documentação **educacional** de dois simuladores: Ransomware (modo controlado e não destrutivo) e Keylogger (registro em arquivo de teste). Todas as execuções devem ser feitas em VM isolada; o repositório inclui instruções, testes, análises de detecção e recomendações de mitigação. Link do repositório: `<COLE_AQUI>`.
-
----
-
-## 11. Referências e Recursos úteis
-
-* Python — documentação oficial
-* `cryptography` (Fernet) — documentação
-* `pynput` — documentação de captura de teclado
-* `smtplib` — biblioteca padrão Python para envio de e-mails
-* Slides do curso: "Simulando um Malware de Captura de Dados Simples em Python"
-* GitHub Quick Start
-
-(Adicionar links na versão final do README.)
-
----
-
-## 12. Licença
-
-Escolha e especifique a licença desejada (ex.: MIT). Reforce que o conteúdo é educacional e que o uso indevido é proibido.
-
----
-
-> Se desejar, posso também gerar os scripts `ransomware_sim.py` e `keylogger_sim.py` em modo **totalmente seguro** (com `--dry-run` como padrão, operações limitadas a `tests/` e sem envio real), ou preparar o `requirements.txt` e um `smtp_config_template.json`. Quer que eu gere esses arquivos agora?
+nginx
+Copiar código
+MIT License
+Contato
+Se quiser que eu adapte este README aos nomes reais de arquivos do seu repositório (por exemplo, se você usou nomes diferentes dos citados), diga o nome dos ficheiros e eu atualizo o README imediatamente.
